@@ -1,0 +1,785 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Data Loader</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+    <script src="script1.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+        
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 20px;
+            backdrop-filter: blur(10px);
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
+            overflow: hidden;
+        }
+        
+        .header {
+            background: linear-gradient(45deg, #ff6b6b, #feca57);
+            padding: 30px;
+            text-align: center;
+            color: white;
+        }
+        
+        .header h1 {
+            font-size: 2.5em;
+            margin-bottom: 10px;
+            text-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+        }
+        
+        .controls {
+            padding: 30px;
+            background: rgba(255, 255, 255, 0.8);
+            border-bottom: 1px solid #eee;
+        }
+        
+        .control-group {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 20px;
+            align-items: end;
+            margin-bottom: 20px;
+        }
+        
+        .input-group {
+            flex: 1;
+            min-width: 200px;
+        }
+        
+        label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 600;
+            color: #333;
+        }
+        
+        input[type="text"], input[type="number"], input[type="file"] {
+            width: 100%;
+            padding: 12px;
+            border: 2px solid #ddd;
+            border-radius: 10px;
+            font-size: 16px;
+            transition: all 0.3s ease;
+        }
+        
+        input[type="text"]:focus, input[type="Number"]:focus, input[type="file"]:focus {
+            outline: none;
+            border-color: #667eea;
+            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+        }
+        
+        input[type="file"] {
+            padding: 8px;
+            background: white;
+        }
+        
+        .btn {
+            padding: 12px 24px;
+            border: none;
+            border-radius: 10px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-decoration: none;
+            display: inline-block;
+            text-align: center;
+        }
+        
+        .btn-primary {
+            background: linear-gradient(45deg, #667eea, #764ba2);
+            color: white;
+        }
+        
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 20px rgba(102, 126, 234, 0.3);
+        }
+        
+        .btn-secondary {
+            background: linear-gradient(45deg, #ff6b6b, #feca57);
+            color: white;
+            margin-right: 10px;
+        }
+        
+        .btn-secondary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 20px rgba(255, 107, 107, 0.3);
+        }
+        
+        .btn-success {
+            background: linear-gradient(45deg, #48cab2, #2dd4bf);
+            color: white;
+        }
+        
+        .btn-success:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 20px rgba(72, 202, 178, 0.3);
+        }
+        
+        .display-area {
+            padding: 30px;
+            min-height: 400px;
+        }
+        
+        .data-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 20px;
+            border-radius: 10px;
+            overflow: hidden;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+        }
+        
+        .data-table th {
+            background: linear-gradient(45deg, #667eea, #764ba2);
+            color: white;
+            padding: 15px;
+            text-align: left;
+            font-weight: 600;
+            white-space: nowrap;
+        }
+        
+        .data-table td {
+            padding: 12px 15px;
+            border-bottom: 1px solid #eee;
+            transition: background-color 0.3s ease;
+            white-space: nowrap;
+            overflow: visible;
+            word-wrap: break-word;
+            max-width: none;
+        }
+        
+        .data-table tr:nth-child(even) {
+            background-color: #f8f9fa;
+        }
+        
+        .data-table tr:hover {
+            background-color: #e3f2fd;
+        }
+        
+        .data-table tr:last-child {
+            background: linear-gradient(45deg, #ffd700, #ffed4e) !important;
+            font-weight: 600;
+        }
+        
+        .export-controls {
+            margin-top: 20px;
+            padding-top: 20px;
+            border-top: 1px solid #eee;
+        }
+        
+        .info-card {
+            background: linear-gradient(45deg, #48cab2, #2dd4bf);
+            color: white;
+            padding: 20px;
+            border-radius: 10px;
+            margin-bottom: 20px;
+            text-align: center;
+        }
+        
+        .loading {
+            display: none;
+            text-align: center;
+            padding: 40px;
+        }
+        
+        .spinner {
+            width: 50px;
+            height: 50px;
+            border: 5px solid #f3f3f3;
+            border-top: 5px solid #667eea;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 20px;
+        }
+        
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        
+        .error {
+            background: #ff4757;
+            color: white;
+            padding: 15px;
+            border-radius: 10px;
+            margin: 20px 0;
+            display: none;
+        }
+
+        .search-results {
+            background: white;
+            border: 2px solid #ddd;
+            border-top: none;
+            border-radius: 0 0 10px 10px;
+            max-height: 200px;
+            overflow-y: auto;
+            position: absolute;
+            width: 100%;
+            z-index: 1000;
+            display: none;
+        }
+
+        .search-result-item {
+            padding: 10px 15px;
+            cursor: pointer;
+            border-bottom: 1px solid #eee;
+        }
+
+        .search-result-item:hover {
+            background-color: #f0f0f0;
+        }
+
+        .search-result-item:last-child {
+            border-bottom: none;
+        }
+
+        .input-group {
+            position: relative;
+        }
+        
+        @media (max-width: 768px) {
+            .control-group {
+                flex-direction: column;
+            }
+            
+            .header h1 {
+                font-size: 2em;
+            }
+            
+            .data-table {
+                font-size: 14px;
+                overflow-x: auto;
+                display: block;
+                white-space: nowrap;
+            }
+            
+            .data-table th,
+            .data-table td {
+                padding: 8px 10px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🔥 Transaction_K-Cash </h1>
+            <p>ระบบโหลดและจัดการข้อมูลอัตโนมัติ</p>
+        </div>
+        
+        <div class="controls">
+            <div class="control-group">
+                <div class="input-group">
+                    <label for="fileInput">📁 เลือกไฟล์ Excel:</label>
+                    <input type="file" id="fileInput" accept=".xlsx,.xls" style="margin-bottom: 10px;">
+                    <input type="text" id="employeeSearch" placeholder="ค้นหา ID Branch " value="">
+                    <div class="search-results" id="searchResults"></div>
+                </div>
+                <div class="input-group">
+                    <label for="recordCount">📊 จำนวนรายการ:</label>
+                    <input type="number" id="recordCount" placeholder="กรอกจำนวน" min="1" max="1000" value="10">
+                </div>
+                <button class="btn btn-primary" onclick="loadData()">🚀 Load Data</button>
+            </div>
+            
+            <div class="info-card">
+                <strong>💡 คำแนะนำ:</strong> เลือกไฟล์ Excel จากเครื่องของคุณ ค้นหา ID Branch แล้วกำหนดจำนวนรายการที่ต้องการจากรายการล่างสุด
+            </div>
+        </div>
+        
+        <div class="display-area">
+            <div class="loading" id="loadingIndicator">
+                <div class="spinner"></div>
+                <p>กำลังโหลดข้อมูล...</p>
+            </div>
+            
+            <div class="error" id="errorMessage"></div>
+            
+            <div id="dataDisplay">
+                <h3>📋 แสดงข้อมูล</h3>
+                <p>กรุณาเลือกไฟล์ Excel และค้นหาชื่อ ID Branch แล้วกด Load Data เพื่อเริ่มต้น</p>
+            </div>
+            
+            <div class="export-controls" id="exportControls" style="display: none;">
+                <h4>📤 Export ข้อมูล:</h4>
+                <button class="btn btn-secondary" onclick="exportToPDF()">📄 Export PDF</button>
+                <button class="btn btn-success" onclick="exportToExcel()">📊 Export Excel</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let currentData = [];
+        let excelData = [];
+        let excelHeaders = [];
+        let allEmployees = [];
+        let selectedEmployee = '';
+        
+        // โหลดข้อมูลจากไฟล์ Excel
+        async function loadExcelData() {
+            try {
+                const fileInput = document.getElementById('fileInput');
+                
+                if (!fileInput.files || !fileInput.files[0]) {
+                    throw new Error('กรุณาเลือกไฟล์ Excel');
+                }
+                
+                const file = fileInput.files[0];
+                const data = await file.arrayBuffer();
+                const workbook = XLSX.read(data, { type: 'array' });
+                const worksheet = workbook.Sheets[workbook.SheetNames[0]];
+                const jsonData = XLSX.utils.sheet_to_json(worksheet);
+                
+                if (jsonData.length === 0) {
+                    throw new Error('ไฟล์ Excel ไม่มีข้อมูล');
+                }
+                
+                // เก็บ headers จากไฟล์ Excel
+                excelHeaders = Object.keys(jsonData[0]);
+                
+                // แปลงข้อมูลให้อยู่ในรูปแบบที่ใช้งานได้
+                excelData = jsonData.map((row, index) => {
+                    return {
+                        rowIndex: index + 1,
+                        ...row
+                    };
+                });
+                
+                // สร้างรายการพนักงานสำหรับการค้นหา
+                const employeeField = excelHeaders.find(header => 
+                    header.toLowerCase().includes('employee') || 
+                    header.toLowerCase().includes('name') ||
+                    header.toLowerCase().includes('ชื่อ')
+                );
+                
+                if (employeeField) {
+                    allEmployees = [...new Set(excelData.map(row => row[employeeField]).filter(name => name))];
+                } else {
+                    // ถ้าไม่เจอฟิลด์ชื่อพนักงาน ใช้ค่าจากคอลัมน์แรก
+                    allEmployees = [...new Set(excelData.map(row => row[excelHeaders[0]]).filter(name => name))];
+                }
+                
+                console.log('Excel data loaded:', excelData.length, 'records');
+                console.log('Headers:', excelHeaders);
+                console.log('Employees found:', allEmployees.length);
+                return excelData;
+            } catch (error) {
+                console.error('Error loading Excel file:', error);
+                throw error;
+            }
+        }
+        
+        // ค้นหาพนักงาน
+        function searchEmployees(query) {
+            if (!query || query.length < 1) {
+                hideSearchResults();
+                return;
+            }
+            
+            const filteredEmployees = allEmployees.filter(emp => 
+                emp && emp.toString().toLowerCase().includes(query.toLowerCase())
+            );
+            
+            displaySearchResults(filteredEmployees);
+        }
+        
+        // แสดงผลการค้นหา
+        function displaySearchResults(employees) {
+            const resultsDiv = document.getElementById('searchResults');
+            
+            if (employees.length === 0) {
+                hideSearchResults();
+                return;
+            }
+            
+            let html = '';
+            employees.slice(0, 10).forEach(emp => {
+                html += `<div class="search-result-item" onclick="selectEmployee('${emp}')">${emp}</div>`;
+            });
+            
+            resultsDiv.innerHTML = html;
+            resultsDiv.style.display = 'block';
+        }
+        
+        // เลือกพนักงาน
+        function selectEmployee(employeeName) {
+            document.getElementById('employeeSearch').value = employeeName;
+            selectedEmployee = employeeName;
+            hideSearchResults();
+        }
+        
+        // ซ่อนผลการค้นหา
+        function hideSearchResults() {
+            document.getElementById('searchResults').style.display = 'none';
+        }
+        
+        async function loadData() {
+            const searchQuery = document.getElementById('employeeSearch').value;
+            const count = parseInt(document.getElementById('recordCount').value);
+            
+            if (!count || count <= 0) {
+                showError('กรุณากรอกจำนวนรายการที่ถูกต้อง');
+                return;
+            }
+            
+            showLoading(true);
+            hideError();
+            
+            try {
+                // โหลดข้อมูลจากไฟล์ Excel
+                if (excelData.length === 0) {
+                    await loadExcelData();
+                }
+                
+                // จำลองเวลาการโหลด
+                await new Promise(resolve => setTimeout(resolve, 1000));
+                
+                let filteredData = excelData;
+                
+                // กรองข้อมูลตามชื่อพนักงานถ้ามีการค้นหา
+                if (searchQuery) {
+                    const employeeField = excelHeaders.find(header => 
+                        header.toLowerCase().includes('employee') || 
+                        header.toLowerCase().includes('name') ||
+                        header.toLowerCase().includes('ชื่อ')
+                    ) || excelHeaders[0];
+                    
+                    filteredData = excelData.filter(row => 
+                        row[employeeField] && 
+                        row[employeeField].toString().toLowerCase().includes(searchQuery.toLowerCase())
+                    );
+                }
+                
+                // ดึงข้อมูลจากรายการล่างสุด
+                const dataFromBottom = filteredData.slice(-count);
+                currentData = dataFromBottom;
+                
+                if (currentData.length === 0) {
+                    showError('ไม่พบข้อมูลที่ตรงกับเงื่อนไขการค้นหา');
+                    return;
+                }
+                
+                displayData(currentData);
+                document.getElementById('exportControls').style.display = 'block';
+                
+            } catch (error) {
+                console.error('Load data error:', error);
+                showError('เกิดข้อผิดพลาดในการโหลดข้อมูล: ' + error.message);
+            } finally {
+                showLoading(false);
+            }
+        }
+        
+        function displayData(data) {
+            const displayArea = document.getElementById('dataDisplay');
+            
+            if (data.length === 0) {
+                displayArea.innerHTML = '<p>ไม่พบข้อมูล</p>';
+                return;
+            }
+            
+            // ใช้ headers จากไฟล์ Excel
+            const columns = excelHeaders;
+            
+            let html = `
+                <h3>📋 แสดงข้อมูล (${data.length} รายการ)</h3>
+                <div style="overflow-x: auto;">
+                <table class="data-table">
+                    <thead>
+                        <tr>
+            `;
+            
+            // สร้างหัวคอลัมน์จาก Excel headers
+            columns.forEach(col => {
+                html += `<th>${col}</th>`;
+            });
+            
+            html += `
+                        </tr>
+                    </thead>
+                    <tbody>
+            `;
+            
+            // สร้างแถวข้อมูล
+            data.forEach((row, index) => {
+                html += '<tr>';
+                columns.forEach(col => {
+                    let value = row[col];
+                    
+                    // จัดรูปแบบข้อมูลตามประเภท
+                    if (typeof value === 'number') {
+                        // ตรวจสอบว่าเป็นหมายเลขบัตรหรือไม่
+                        const colName = col.toLowerCase();
+                        if (colName.includes('card') || colName.includes('number')) {
+                            value = String(value);
+                        } else {
+                            value = value.toLocaleString('th-TH');
+                        }
+                    } else if (value == null) {
+                        value = '';
+                    } else {
+                        value = String(value);
+                        // ตรวจสอบว่าเป็นหมายเลขบัตรหรือไม่
+                        const colName = col.toLowerCase();
+                        if (colName.includes('card') || colName.includes('number')) {
+                            value = value.replace(/,/g, '');
+                        }
+                    }
+                    
+                    html += `<td title="${value}">${value}</td>`;
+                });
+                html += '</tr>';
+            });
+            
+            html += '</tbody></table></div>';
+            displayArea.innerHTML = html;
+        }
+        
+        function exportToPDF() {
+            if (currentData.length === 0) {
+                showError('ไม่มีข้อมูลสำหรับ Export');
+                return;
+            }
+            
+            const { jsPDF } = window.jspdf;
+            const doc = new jsPDF('l', 'mm', 'a4'); // landscape orientation
+            
+            // เพิ่มหัวข้อ
+            doc.setFontSize(16);
+            doc.text('Excel Data Report', 20, 20);
+            doc.setFontSize(12);
+            doc.text(`Generated: ${new Date().toLocaleString('th-TH')}`, 20, 30);
+            doc.text(`Records: ${currentData.length}`, 20, 40);
+            
+            const columns = excelHeaders;
+            const startY = 55;
+            const lineHeight = 8;
+            let yPosition = startY;
+            
+            // คำนวณความกว้างของแต่ละคอลัมน์แบบแปรผัน
+            const pageWidth = doc.internal.pageSize.getWidth();
+            const availableWidth = pageWidth - 40;
+            const colWidths = [];
+            
+            // กำหนดความกว้างตามประเภทของคอลัมน์
+            columns.forEach(col => {
+                const colName = col.toLowerCase();
+                if (colName.includes('date') || colName.includes('time') || colName.includes('transaction')) {
+                    colWidths.push(25);
+                } else if (colName.includes('card') || colName.includes('number')) {
+                    colWidths.push(30);
+                } else if (colName.includes('employee') || colName.includes('name')) {
+                    colWidths.push(35);
+                } else if (colName.includes('amount') || colName.includes('fee') || colName.includes('balance')) {
+                    colWidths.push(22);
+                } else {
+                    colWidths.push(20);
+                }
+            });
+            
+            // ปรับสัดส่วนให้พอดีกับหน้า
+            const totalWidth = colWidths.reduce((sum, w) => sum + w, 0);
+            const scaleFactor = availableWidth / totalWidth;
+            colWidths.forEach((width, index) => {
+                colWidths[index] = width * scaleFactor;
+            });
+            
+            // Header
+            doc.setFontSize(8);
+            doc.setFont(undefined, 'bold');
+            let xPosition = 20;
+            columns.forEach((col, index) => {
+                const text = String(col);
+                const maxWidth = colWidths[index] - 2;
+                doc.text(text, xPosition, yPosition, { maxWidth });
+                xPosition += colWidths[index];
+            });
+            yPosition += lineHeight;
+            
+            // Draw line under header
+            doc.line(20, yPosition - 3, pageWidth - 20, yPosition - 3);
+            doc.setFont(undefined, 'normal');
+            
+            // Data rows
+            currentData.forEach((row, rowIndex) => {
+                const isLastRow = rowIndex === currentData.length - 1;
+                
+                if (isLastRow) {
+                    doc.setFillColor(255, 215, 0);
+                    doc.rect(15, yPosition - 6, pageWidth - 30, lineHeight, 'F');
+                    doc.setFont(undefined, 'bold');
+                }
+                
+                xPosition = 20;
+                columns.forEach((col, colIndex) => {
+                    let value = row[col];
+                    
+                    // จัดรูปแบบข้อมูลตามประเภท
+                    if (value == null || value === '') {
+                        value = '-';
+                    } else if (typeof value === 'number') {
+                        // ตรวจสอบว่าเป็นหมายเลขบัตรหรือไม่
+                        const colName = col.toLowerCase();
+                        if (colName.includes('card') || colName.includes('number')) {
+                            value = String(value);
+                        } else {
+                            value = value.toLocaleString('th-TH');
+                        }
+                    } else {
+                        value = String(value);
+                        // ตรวจสอบว่าเป็นหมายเลขบัตรหรือไม่
+                        const colName = col.toLowerCase();
+                        if (colName.includes('card') || colName.includes('number')) {
+                            value = value.replace(/,/g, '');
+                        }
+                    }
+                    
+                    const maxWidth = colWidths[colIndex] - 2;
+                    doc.text(value, xPosition, yPosition, { maxWidth });
+                    xPosition += colWidths[colIndex];
+                });
+                
+                yPosition += lineHeight;
+                doc.setFont(undefined, 'normal');
+                
+                // เพิ่มหน้าใหม่เมื่อเนื้อหาเกินหน้า
+                if (yPosition > 190) {
+                    doc.addPage();
+                    yPosition = 20;
+                    
+                    // พิมพ์หัวคอลัมน์ใหม่ในหน้าใหม่
+                    doc.setFont(undefined, 'bold');
+                    xPosition = 20;
+                    columns.forEach((col, index) => {
+                        const text = String(col);
+                        const maxWidth = colWidths[index] - 2;
+                        doc.text(text, xPosition, yPosition, { maxWidth });
+                        xPosition += colWidths[index];
+                    });
+                    yPosition += lineHeight;
+                    doc.line(20, yPosition - 3, pageWidth - 20, yPosition - 3);
+                    doc.setFont(undefined, 'normal');
+                }
+            });
+            
+            doc.save(`excel-data-report-${new Date().toISOString().split('T')[0]}.pdf`);
+        }
+        
+        function exportToExcel() {
+            if (currentData.length === 0) {
+                showError('ไม่มีข้อมูลสำหรับ Export');
+                return;
+            }
+            
+            const wb = XLSX.utils.book_new();
+            
+            // สร้างข้อมูลโดยใช้ headers จากไฟล์ต้นฉบับ
+            const exportData = currentData.map(row => {
+                const newRow = {};
+                excelHeaders.forEach(header => {
+                    newRow[header] = row[header];
+                });
+                return newRow;
+            });
+            
+            const ws = XLSX.utils.json_to_sheet(exportData);
+            
+            // ปรับความกว้างของคอลัมน์
+            const colWidths = excelHeaders.map(col => {
+                const maxLength = Math.max(
+                    col.length,
+                    ...currentData.map(row => String(row[col] || '').length)
+                );
+                return { wch: Math.min(maxLength + 2, 50) };
+            });
+            
+            ws['!cols'] = colWidths;
+            
+            XLSX.utils.book_append_sheet(wb, ws, 'Export Data');
+            XLSX.writeFile(wb, `excel-export-${new Date().toISOString().split('T')[0]}.xlsx`);
+        }
+        
+        function showLoading(show) {
+            document.getElementById('loadingIndicator').style.display = show ? 'block' : 'none';
+        }
+        
+        function showError(message) {
+            const errorElement = document.getElementById('errorMessage');
+            errorElement.textContent = message;
+            errorElement.style.display = 'block';
+        }
+        
+        function hideError() {
+            document.getElementById('errorMessage').style.display = 'none';
+        }
+        
+        // Event Listeners
+        document.addEventListener('DOMContentLoaded', function() {
+            const employeeSearch = document.getElementById('employeeSearch');
+            const recordCount = document.getElementById('recordCount');
+            const fileInput = document.getElementById('fileInput');
+            
+            // ค้นหาพนักงานแบบ real-time
+            employeeSearch.addEventListener('input', function(e) {
+                searchEmployees(e.target.value);
+            });
+            
+            // ซ่อนผลค้นหาเมื่อคลิกที่อื่น
+            document.addEventListener('click', function(e) {
+                if (!e.target.closest('.input-group')) {
+                    hideSearchResults();
+                }
+            });
+            
+            // Enter key สำหรับ load data
+            recordCount.addEventListener('keypress', function(e) {
+                if (e.key === 'Enter') {
+                    loadData();
+                }
+            });
+            
+            employeeSearch.addEventListener('keypress', function(e) {
+                if (e.key === 'Enter') {
+                    loadData();
+                }
+            });
+            
+            // รีเซ็ตข้อมูลเมื่อเปลี่ยนไฟล์
+            fileInput.addEventListener('change', function() {
+                excelData = [];
+                excelHeaders = [];
+                allEmployees = [];
+                currentData = [];
+                selectedEmployee = '';
+                employeeSearch.value = '';
+                hideSearchResults();
+                document.getElementById('exportControls').style.display = 'none';
+                document.getElementById('dataDisplay').innerHTML = `
+                    <h3>📋 แสดงข้อมูล</h3>
+                    <p>กรุณาค้นหาชื่อพนักงาน แล้วกด Load Data เพื่อเริ่มต้น</p>
+                `;
+            });
+        });
+    </script>
+</body>
+</html>
+```
