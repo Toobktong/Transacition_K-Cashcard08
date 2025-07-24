@@ -591,7 +591,7 @@
             doc.text('Card Usage Report', 20, 20);
             // doc.setFontSize(12);
             // doc.setFont('Sarabun-Regular', 'normal');
-            doc.text(`Generated: ${new Date().toLocaleString('th-TH')}`, 20, 30);
+            doc.text(`Generated: ${new Date().toLocaleDateString('th-TH')}`, 20, 30);
             doc.text(`Records: ${currentData.length}`, 20, 40);
 
             const columns = excelHeaders;
